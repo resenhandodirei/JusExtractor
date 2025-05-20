@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard Petições</title>
+</head>
+<body>
+    <h1>Dados extraídos das petições</h1>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Processo</th>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Gênero</th>
+                <th>Escolaridade</th>
+                <th>Bairro</th>
+                <th>Nacionalidade</th>
+                <th>Data do Fato</th>
+                <th>Tipo Infração</th>
+                <th>Decisão</th>
+                <th>Medida Socioeducativa</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in dados %}
+            <tr>
+                <td>{{ d.processo }}</td>
+                <td>{{ d.nome }}</td>
+                <td>{{ d.idade }}</td>
+                <td>{{ d.genero }}</td>
+                <td>{{ d.escolaridade }}</td>
+                <td>{{ d.bairro }}</td>
+                <td>{{ d.nacionalidade }}</td>
+                <td>{{ d.fato_ocorrido }}</td>
+                <td>{{ d.tipo_infracao }}</td>
+                <td>{{ d.decisao }}</td>
+                <td>{{ d.medida_socioeducativa }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Distribuição de Idades</h2>
+<canvas id="chartIdades" width="400" height="200"></canvas>
+
+<h2>Tipos de Infração</h2>
+<canvas id="chartInfracoes" width="400" height="200"></canvas>
+
+
+<script>
+    // Recebendo os dados do Flask via template
+    const contagemIdade = JSON.parse('{{ contagem_idade | safe }}');
+    const contagemInfracao = JSON.parse('{{ contagem_infracao | safe }}');
+
+    // Configurar dados para gráfico de idades
+    const labelsIdade = Object.keys(contagemIdade);
+    const dataIdade = Object.values(contagemIdade);
+
+    const ctxIdade = document.getElementById('chartIdades').getContext('2d');
+    const chartIdades = new Chart(ctxIdade, {
+        type: 'bar',
+        data: {
+            labels: labelsIdade,
+            datasets: [{
+                label: 'Número de Petições por Idade',
+                data: dataIdade,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Configurar dados para gráfico de infrações
+    const labelsInfracao = Object.keys(contagemInfracao);
+    const dataInfracao = Object.values(contagemInfracao);
+
+    const ctxInfracao = document.getElementById('chartInfracoes').getContext('2d');
+    const chartInfracoes = new Chart(ctxInfracao, {
+        type: 'bar',
+        data: {
+            labels: labelsInfracao,
+            datasets: [{
+                label: 'Número de Petições por Tipo de Infração',
+                data: dataInfracao,
+                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

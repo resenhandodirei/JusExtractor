@@ -1,69 +1,69 @@
+from flask import Flask, request, render_template, redirect, url_for
+from collections import Counter
+import json
 import os
-import zipfile
-from flask import Flask, request, render_template, redirect, url_for, flash
-from werkzeug.utils import secure_filename
+from extractor import extrair_dados_peticao
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # necessário para flash messages
-
 UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-ALLOWED_EXTENSIONS = {'zip'}
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def extrair_dados_txt(caminho_txt):
-    with open(caminho_txt, 'r', encoding='utf-8') as file:
-        texto = file.read()
-    return [{
-        "arquivo": os.path.basename(caminho_txt),
-        "pagina": 1,
-        "conteudo": texto.strip()
-    }]
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
-    if request.method == 'POST':
-        if 'zip_file' not in request.files:
-            flash('Nenhum arquivo enviado')
-            return redirect(request.url)
-
-        file = request.files['zip_file']
-
-        if file.filename == '':
-            flash('Nenhum arquivo selecionado')
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            caminho_zip = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(caminho_zip)
-
-            # Extrair ZIP
-            with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
-                zip_ref.extractall(UPLOAD_FOLDER)
-
-            dados_extraidos = []
-            # Percorrer arquivos extraídos procurando .txt
-            for nome_arquivo in os.listdir(UPLOAD_FOLDER):
-                if nome_arquivo.lower().endswith('.txt'):
-                    caminho_txt = os.path.join(UPLOAD_FOLDER, nome_arquivo)
-                    dados_extraidos.extend(extrair_dados_txt(caminho_txt))
-
-            if not dados_extraidos:
-                flash('Nenhum arquivo .txt encontrado no ZIP enviado')
-                return redirect(request.url)
-
-            return render_template('dashboard_link.html', dados=dados_extraidos)
-
-        else:
-            flash('Arquivo enviado não é um ZIP válido')
-            return redirect(request.url)
-
     return render_template('index.html')
-    
+
+@app.route('/upload', methods=['POST'])
+def upload_files():
+    uploaded_files = request.files.getlist("files[]")
+    if not uploaded_files or uploaded_files[0].filename == '':
+        return redirect(url_for('index'))
+
+    # Salvar arquivos .txt na pasta uploads
+    for file in uploaded_files:
+        if file.filename.endswith('.txt'):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+
+    return redirect(url_for('processar'))
+
+@app.route('/processar')
+def processar():
+    dados_peticoes = []
+    arquivos = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith('.txt')]
+    print(f"Arquivos encontrados: {arquivos}")
+
+    for arquivo in arquivos:
+        caminho = os.path.join(app.config['UPLOAD_FOLDER'], arquivo)
+        print(f"Lendo arquivo: {caminho}")
+        with open(caminho, 'r', encoding='utf-8') as f:
+            texto = f.read()
+            dados = extrair_dados_peticao(texto)
+            print(f"Dados extraídos: {dados}")
+            dados_peticoes.append(dados)
+
+    if not dados_peticoes:
+        print("Nenhum dado processado.")
+        return "Nenhum dado processado ainda."
+
+    # Agregando dados para os gráficos
+    idades = [d['idade'] for d in dados_peticoes if d['idade'] is not None]
+    tipos_infracao = [d['tipo_infracao'] for d in dados_peticoes if d['tipo_infracao']]
+
+    contagem_idade = dict(Counter(idades))
+    contagem_infracao = dict(Counter(tipos_infracao))
+
+    print(f"Contagem idade: {contagem_idade}")
+    print(f"Contagem infração: {contagem_infracao}")
+
+    return render_template(
+        'dashboard.html', 
+        dados=dados_peticoes,
+        contagem_idade=json.dumps(contagem_idade),
+        contagem_infracao=json.dumps(contagem_infracao)
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
