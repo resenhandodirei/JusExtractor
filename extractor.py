@@ -1,16 +1,16 @@
-from PyPDF2 import PdfReader
+import PyPDF2
 
 def extrair_dados_pdf(caminho_pdf):
-    dados_extraidos = []
+    dados = []
 
-    reader = PdfReader(caminho_pdf)
-
-    for i, page in enumerate(reader.pages):
-        texto = page.extract_text()
-        if texto:
-            dados_extraidos.append({
+    with open(caminho_pdf, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for i, pagina in enumerate(reader.pages):
+            texto = pagina.extract_text() or ''
+            dados.append({
+                "arquivo": caminho_pdf.split("/")[-1],
                 "pagina": i + 1,
                 "conteudo": texto.strip()
             })
 
-    return dados_extraidos
+    return dados
