@@ -2,12 +2,70 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>Upload Petições</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload de Petições</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #e0c3fc, #8ec5fc);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4b0082;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        form {
+            background-color: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        input[type="file"] {
+            padding: 12px;
+            border: 2px dashed #a974d8;
+            background-color: #f9f1ff;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+            color: #4b0082;
+        }
+
+        button {
+            background-color: #7e57c2;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #673ab7;
+            transform: scale(1.03);
+        }
+    </style>
 </head>
 <body>
     <h1>Envie os arquivos .txt das petições</h1>
     <form action="{{ url_for('upload_files') }}" method="post" enctype="multipart/form-data">
         <input type="file" name="files[]" multiple accept=".txt" />
+        <br />
         <button type="submit">Enviar</button>
     </form>
 </body>

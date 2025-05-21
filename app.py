@@ -54,16 +54,23 @@ def processar():
 
     contagem_idade = dict(Counter(idades))
     contagem_infracao = dict(Counter(tipos_infracao))
+    contagem_genero = dict(Counter([d['genero'] for d in dados_peticoes if d['genero']]))
+    contagem_escolaridade = dict(Counter([d['escolaridade'] for d in dados_peticoes if d['escolaridade']]))
+    contagem_nacionalidade = dict(Counter([d['nacionalidade'] for d in dados_peticoes if d['nacionalidade']]))
+    contagem_decisao = dict(Counter([d['decisao'] for d in dados_peticoes if d['decisao']]))
 
-    print(f"Contagem idade: {contagem_idade}")
-    print(f"Contagem infração: {contagem_infracao}")
 
     return render_template(
-        'dashboard.html', 
-        dados=dados_peticoes,
-        contagem_idade=json.dumps(contagem_idade),
-        contagem_infracao=json.dumps(contagem_infracao)
-    )
+    'dashboard.html',
+    dados=dados_peticoes,
+    contagem_idade=json.dumps(contagem_idade),
+    contagem_infracao=json.dumps(contagem_infracao),
+    contagem_genero=json.dumps(contagem_genero),
+    contagem_escolaridade=json.dumps(contagem_escolaridade),
+    contagem_nacionalidade=json.dumps(contagem_nacionalidade),
+    contagem_decisao=json.dumps(contagem_decisao),
+)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

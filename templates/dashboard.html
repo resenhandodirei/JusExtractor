@@ -4,14 +4,82 @@
     <meta charset="UTF-8" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Dashboard Petições</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9fb;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #5e3ea1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #5e3ea1;
+            color: white;
+        }
+
+        .chart-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 45%;
+            min-width: 300px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin: 40px auto 20px;
+            color: #5e3ea1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>Dados extraídos das petições</h1>
-    <table border="1" cellpadding="5" cellspacing="0">
+    <h1>Dashboard de Petições</h1>
+
+    <table>
         <thead>
             <tr>
-                <th>Processo</th>
-                <th>Nome</th>
                 <th>Idade</th>
                 <th>Gênero</th>
                 <th>Escolaridade</th>
@@ -26,8 +94,6 @@
         <tbody>
             {% for d in dados %}
             <tr>
-                <td>{{ d.processo }}</td>
-                <td>{{ d.nome }}</td>
                 <td>{{ d.idade }}</td>
                 <td>{{ d.genero }}</td>
                 <td>{{ d.escolaridade }}</td>
@@ -42,63 +108,75 @@
         </tbody>
     </table>
 
-    <h2>Distribuição de Idades</h2>
-<canvas id="chartIdades" width="400" height="200"></canvas>
+    <div class="chart-grid">
+        <div class="chart-container">
+            <h2>Distribuição de Idades</h2>
+            <canvas id="chartIdades"></canvas>
+        </div>
 
-<h2>Tipos de Infração</h2>
-<canvas id="chartInfracoes" width="400" height="200"></canvas>
+        <div class="chart-container">
+            <h2>Tipos de Infração</h2>
+            <canvas id="chartInfracoes"></canvas>
+        </div>
 
+        <div class="chart-container">
+            <h2>Gênero</h2>
+            <canvas id="chartGenero"></canvas>
+        </div>
 
-<script>
-    // Recebendo os dados do Flask via template
-    const contagemIdade = JSON.parse('{{ contagem_idade | safe }}');
-    const contagemInfracao = JSON.parse('{{ contagem_infracao | safe }}');
+        <div class="chart-container">
+            <h2>Escolaridade</h2>
+            <canvas id="chartEscolaridade"></canvas>
+        </div>
 
-    // Configurar dados para gráfico de idades
-    const labelsIdade = Object.keys(contagemIdade);
-    const dataIdade = Object.values(contagemIdade);
+        <div class="chart-container">
+            <h2>Nacionalidade</h2>
+            <canvas id="chartNacionalidade"></canvas>
+        </div>
 
-    const ctxIdade = document.getElementById('chartIdades').getContext('2d');
-    const chartIdades = new Chart(ctxIdade, {
-        type: 'bar',
-        data: {
-            labels: labelsIdade,
-            datasets: [{
-                label: 'Número de Petições por Idade',
-                data: dataIdade,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
+        <div class="chart-container">
+            <h2>Decisão</h2>
+            <canvas id="chartDecisao"></canvas>
+        </div>
+    </div>
 
-    // Configurar dados para gráfico de infrações
-    const labelsInfracao = Object.keys(contagemInfracao);
-    const dataInfracao = Object.values(contagemInfracao);
+    <script>
+        const contagemIdade = JSON.parse('{{ contagem_idade | safe }}');
+        const contagemInfracao = JSON.parse('{{ contagem_infracao | safe }}');
+        const contagemGenero = JSON.parse('{{ contagem_genero | safe }}');
+        const contagemEscolaridade = JSON.parse('{{ contagem_escolaridade | safe }}');
+        const contagemNacionalidade = JSON.parse('{{ contagem_nacionalidade | safe }}');
+        const contagemDecisao = JSON.parse('{{ contagem_decisao | safe }}');
 
-    const ctxInfracao = document.getElementById('chartInfracoes').getContext('2d');
-    const chartInfracoes = new Chart(ctxInfracao, {
-        type: 'bar',
-        data: {
-            labels: labelsInfracao,
-            datasets: [{
-                label: 'Número de Petições por Tipo de Infração',
-                data: dataInfracao,
-                backgroundColor: 'rgba(255, 99, 132, 0.6)'
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-</script>
+        const criarGrafico = (id, label, dados, cor) => {
+            const ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dados),
+                    datasets: [{
+                        label: label,
+                        data: Object.values(dados),
+                        backgroundColor: cor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        };
 
-    <a href="{{ url_for('index') }}">Voltar</a>
+        criarGrafico('chartIdades', 'Número por Idade', contagemIdade, 'rgba(54, 162, 235, 0.6)');
+        criarGrafico('chartInfracoes', 'Número por Infração', contagemInfracao, 'rgba(255, 99, 132, 0.6)');
+        criarGrafico('chartGenero', 'Número por Gênero', contagemGenero, 'rgba(153, 102, 255, 0.6)');
+        criarGrafico('chartEscolaridade', 'Número por Escolaridade', contagemEscolaridade, 'rgba(255, 206, 86, 0.6)');
+        criarGrafico('chartNacionalidade', 'Número por Nacionalidade', contagemNacionalidade, 'rgba(75, 192, 192, 0.6)');
+        criarGrafico('chartDecisao', 'Número por Decisão', contagemDecisao, 'rgba(255, 159, 64, 0.6)');
+    </script>
+
+    <a href="{{ url_for('index') }}">← Voltar</a>
 </body>
 </html>
